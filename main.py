@@ -1,35 +1,34 @@
 import sqlite3, sys
 
-conn = sqlite3.connect("bin/db/scp.db")
+conn = sqlite3.connect("scp.db")
 c = conn.cursor()
 
 def getscp(name, clearance):
-    c.execute("SELECT * FROM scps WHERE name=?", (name,))
-    rows = c.fetchall()
-    row = rows
-    scpname = row[0][0]
-    securitylevel = row[0][1]
-    scpdescription = row[0][2]
-    if int(clearance) >= int(securitylevel):
-      return [scpname, securitylevel, scpdescription]
-    
+    c.execute("SELECT name, security_level, description FROM scps WHERE name=?",(name,))
+    rows = c.fetchone()
+    if rows is not None:
+        scpname, security_level, scpdescription = rows
+        if clearance >= security_level:
+            return [scpname, security_level, scpdescription]
+        else:
+            print("You have no clearance to view document")
+    else:
+        print("no documents found")
 
 
 def personel(scp):
     global name
-    c.execute("SELECT * FROM personel WHERE name=?", (name,))
-    rows = c.fetchall()
-    row = rows
-    clearancelevel = row[0][2]
-    check = getscp(scp, clearancelevel)
-    if check:
+    c.execute("SELECT name, security_level FROM personel WHERE name=?", (name,))
+    rows = c.fetchone()
+    name, clearance = rows
+    if getscp(scp, clearance):
+        docs = getscp(scp, clearance)
         print(f"""
-Filename: {check[0]}
-Security Clearance Level: {check[1]}
-Description: {check[2]}
+FILE: {docs[0]}
+CLEARANCE LEVEL: {docs[1]}
+DESCRIPTION: {docs[2]}
         """)
-    else:
-      print("You no clearance for this information.")
+    
     
     
 def login(username, password):
@@ -61,8 +60,8 @@ def main(name, password):
             else:
                 print("not found")
    
-   
+  
 while True:
-    name = input("Name: ")
-    password = input("Password: ")
+    name = input("NAME: ")
+    password = input("PASSWORD: ")
     main(name, password)
